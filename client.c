@@ -1,40 +1,64 @@
-#include <sys/socket.h>		/* socket(2) */
+#include <sys/socket.h>		/* socket() */
 #include <netinet/in.h>		/* ip addr */
-#include <arpa/inet.h>		/* htons(uint16_t hostshort) port -> network order */
-#include <unistd.h>		/* close(2) */
-#include <stdio.h>		/* perror */
-#include <rpc/types.h>		/* INADDR_LOOPBACK ? */
+#include <unistd.h>		/* close() */
 #include <netdb.h>		/* struct addrinfo */
+#include <stdio.h>		/* perror */
+#include <string.h>		/* memset */
+
 
 int main(int argc, char *argv[])
 {
-	struct addrinfo hints;
-	struct addrinfo *serinfo;
-	int clifd;
-	char msg[] = "Hello world.";
+	/* Message */
+	char rmsg[16];
+	char smsg[] = "Hello server";
 
+	/* File descriptor & addresses */
+	int cfd;
+	struct addrinfo hints;
+	struct addrinfo *info;
+
+	/*
+	** "All the other fields in the structure pointed to by hints must
+	** contain either 0 or a null pointer, as appropriate."
+	*/
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
-	hints.ai_flags = 0;
+	hints.ai_flags = AI_NUMERICSERV;
 
-	if (getaddrinfo("127.0.0.1", "5000", &hints, &serinfo) != 0)
+	/*
+	** If node is NULL, then the network address
+	** will be set to the loopback interface address
+	*/
+	if (getaddrinfo(NULL, "5000", &hints, &info) != 0) {
 		perror("Getaddrinfo");
+		return -1;
+	}
 
-	clifd = socket(serinfo->ai_family, serinfo->ai_socktype,
-				serinfo->ai_protocol);
-	if (clifd == -1)
+	cfd = socket(info->ai_family, info->ai_socktype,
+				info->ai_protocol);
+	if (cfd == -1) {
 		perror("Socket");
+		freeaddrinfo(info);
+		return -1;
+	}
 
-	if (connect(clifd, serinfo->ai_addr, serinfo->ai_addrlen) == -1)
+	if (connect(cfd, info->ai_addr, info->ai_addrlen) == -1) {
 		perror("Connect");
+	} else {
+		if (send(cfd, &smsg, sizeof(smsg), 0) == -1)
+			perror("Send");
 
-	if (send(clifd, &msg, sizeof(msg), 0) == -1)
-		perror("Send");
+		if (recv(cfd, &rmsg, sizeof(rmsg), 0) == -1)
+			perror("Recv");
 
-	if (close(clifd) != 0)
+		printf("%s\n", rmsg);
+	}
+
+	if (close(cfd) != 0)
 		perror("Close");
-	freeaddrinfo(serinfo);
+	freeaddrinfo(info);
 
 	return 0;
 }
