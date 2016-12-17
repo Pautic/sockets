@@ -1,6 +1,7 @@
+#include <stdlib.h>		/* strtoul */
 #include <sys/socket.h>		/* socket() */
-#include <netinet/in.h>		/* ip addr */
-#include <arpa/inet.h>		/* htons() & htonl()*/
+#include <netinet/in.h>		/* struct sockaddr_in & struct in_addr ? */
+#include <arpa/inet.h>		/* htons() & htonl() */
 #include <unistd.h>		/* close() */
 #include <rpc/types.h>		/* INADDR_LOOPBACK ? */
 #include <stdio.h>		/* perror */
@@ -11,18 +12,27 @@ int main(int argc, char *argv[])
 	char rmsg[16];
 	char smsg[] = "Hello client";
 
+	/* Port */
+	unsigned int port = 5000;
+	if (argc == 2) {
+		unsigned int tmp = strtoul(argv[1], NULL, 10);
+		port = (tmp > 1024) ? tmp : port;
+	}
+
 	/* file descriptors & address */
 	int sfd, cfd;
 	struct sockaddr_in saddr, caddr;
 
 	saddr.sin_family	= AF_INET;
-	saddr.sin_port		= htons(5000u);
+	saddr.sin_port		= htons(port);
 	saddr.sin_addr.s_addr	= htonl(INADDR_LOOPBACK);
 	socklen_t caddrlen	= sizeof(caddr);
 
 	sfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sfd == -1)
+	if (sfd == -1) {
 		perror("Socket");
+		return 0;
+	}
 
 	if (bind(sfd, (struct sockaddr *) &saddr, sizeof(saddr)) != 0)
 		perror("Bind");
