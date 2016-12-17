@@ -6,6 +6,8 @@
 #include <rpc/types.h>		/* INADDR_LOOPBACK ? */
 #include <stdio.h>		/* perror */
 
+#include "sockets.h"
+
 int main(int argc, char *argv[])
 {
 	/* Message */
@@ -13,7 +15,7 @@ int main(int argc, char *argv[])
 	char smsg[] = "Hello client";
 
 	/* Port */
-	unsigned int port = 5000;
+	unsigned int port = defport;
 	if (argc == 2) {
 		unsigned int tmp = strtoul(argv[1], NULL, 10);
 		port = (tmp > 1024) ? tmp : port;

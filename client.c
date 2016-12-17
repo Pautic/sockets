@@ -6,6 +6,7 @@
 #include <stdio.h>		/* perror */
 #include <string.h>		/* memset */
 
+#include "sockets.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,15 +17,13 @@ int main(int argc, char *argv[])
 	/* Port */
 	char b = 6;
 	char port[b];
+	unsigned int p = defport;
 	if (argc == 2) {
 		unsigned int tmp = strtoul(argv[1], NULL, 10);
-		unsigned int p = 5000;
 		if ((tmp > 1024) && (tmp < 65537))
 			p = tmp;
-		snprintf(port, b, "%u", p);
 	}
-
-	printf("port : %s\n", port);
+	snprintf(port, b, "%u", p);
 
 	/* File descriptor & addresses */
 	int cfd;
@@ -50,8 +49,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	cfd = socket(info->ai_family, info->ai_socktype,
-				info->ai_protocol);
+	cfd = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+
 	if (cfd == -1) {
 		perror("Socket");
 		freeaddrinfo(info); /* Find better way to deal with freeaddrinfo */
