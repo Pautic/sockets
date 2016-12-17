@@ -20,9 +20,9 @@ int main(int argc, char *argv[])
 	unsigned int p = defport;
 	if (argc == 2) {
 		unsigned int tmp = strtoul(argv[1], NULL, 10);
-		if ((tmp > 1024) && (tmp < 65537))
-			p = tmp;
+		p = ((tmp > minport) && (tmp < maxport)) ? tmp : p;
 	}
+	/* uint to char[] for getaddrinfo */
 	snprintf(port, b, "%u", p);
 
 	/* File descriptor & addresses */

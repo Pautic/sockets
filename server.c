@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	unsigned int port = defport;
 	if (argc == 2) {
 		unsigned int tmp = strtoul(argv[1], NULL, 10);
-		port = (tmp > 1024) ? tmp : port;
+		port = ((tmp > minport) && (tmp < maxport)) ? tmp : port;
 	}
 
 	/* file descriptors & address */
