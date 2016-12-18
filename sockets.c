@@ -18,23 +18,3 @@ unsigned int get_port(char *argv[])
 
 /* Domain/family */
 const int addrfam = AF_INET;
-
-/* De- and encrypt */
-extern unsigned int crypt(unsigned int key, unsigned int msg)
-{
-	return fmod(pow(msg, (0x00ff & key)), ((key & 0xff00) >> 8));
-}
-
-unsigned long long ipow(unsigned long long base, unsigned long long exp)
-{
-    unsigned long long result = 1;
-    while (exp)
-    {
-        if (exp & 1)
-            result *= base;
-        exp >>= 1;
-        base *= base;
-    }
-
-    return result;
-}

@@ -16,19 +16,6 @@ struct sockclt {
 
 int main(int argc, char *argv[])
 {
-	unsigned int pub = 0x4d07;
-	unsigned int prv = 0x4d2b;
-	unsigned int msg = 5;
-
-	printf("pow %f\n", pow(47, 43));
-	printf("ipow %llu\n", ipow(47, 43));
-
-	printf("msg : %u\n", msg);
-	msg = crypt(pub, msg);
-	printf("msg : %u\n", msg);
-	msg = crypt(prv, msg);
-	printf("msg : %u\n", msg);
-
 	/* Port, get user input else default port */
 	char b = 6;
 	char port[b];
