@@ -1,4 +1,3 @@
-#include <stdlib.h>		/* strtoul */
 #include <sys/socket.h>		/* socket() */
 #include <netinet/in.h>		/* struct sockaddr_in & struct in_addr ? */
 #include <unistd.h>		/* close() */
@@ -8,70 +7,66 @@
 
 #include "sockets.h"
 
-int main(int argc, char *argv[])
-{
-	/* Message */
-	char rmsg[16];
-	char smsg[] = "Hello server";
-
-	/* Port */
-	char b = 6;
-	char port[b];
-	unsigned int p = defport;
-	if (argc == 2) {
-		unsigned int tmp = strtoul(argv[1], NULL, 10);
-		p = ((tmp > minport) && (tmp < maxport)) ? tmp : p;
-	}
-	/* uint to char[] for getaddrinfo */
-	snprintf(port, b, "%u", p);
-
-	/* File descriptor & addresses */
-	int cfd;
+struct sockcli {
+	int fd;
 	struct addrinfo hints;
 	struct addrinfo *info;
+};
 
-	/*
-	** "All the other fields in the structure pointed to by hints must
-	** contain either 0 or a null pointer, as appropriate."
-	*/
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = 0;
-	hints.ai_flags = AI_NUMERICSERV;
+int main(int argc, char *argv[])
+{
+	/* Port, get user input else default port */
+	char b = 6;
+	char port[b];
+	unsigned int portuint = (argc == 2) ? get_port(argv) : defport;
+	snprintf(port, b, "%u", portuint); /* uint to char[] for getaddrinfo */
 
-	/*
-	** "If node is NULL, then the network address
-	** will be set to the loopback interface address"
-	*/
-	if (getaddrinfo(NULL, port, &hints, &info) != 0) {
+	/* Messages */
+	char rmsg[16];
+	char smsg[] = "Key: 123";
+
+	/* File descriptor & addresses */
+	struct sockcli client;
+
+	/* See GETADDRINFO(3) */
+	memset(&client.hints, 0, sizeof(client.hints));
+	client.hints.ai_family 		= addrfam;
+	client.hints.ai_socktype 	= SOCK_STREAM;
+	client.hints.ai_protocol 	= 0;
+	client.hints.ai_flags 		= AI_NUMERICSERV;
+
+	/* Node = NULL -> INADDR_LOOPBACK */
+	if (getaddrinfo(NULL, port, &client.hints, &client.info) != 0) {
 		perror("Getaddrinfo");
 		return 0;
 	}
 
-	cfd = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+	client.fd = socket(	client.info->ai_family,
+				client.info->ai_socktype,
+				client.info->ai_protocol);
 
-	if (cfd == -1) {
+	if (client.fd == -1) {
 		perror("Socket");
-		freeaddrinfo(info); /* Find better way to deal with freeaddrinfo */
-		return 0;
-	}
-
-	if (connect(cfd, info->ai_addr, info->ai_addrlen) == -1) {
-		perror("Connect");
 	} else {
-		if (send(cfd, &smsg, sizeof(smsg), 0) == -1)
-			perror("Send");
+		if (connect(	client.fd,
+				client.info->ai_addr,
+				client.info->ai_addrlen) == -1) {
+			perror("Connect");
+		} else {
+			if (send(client.fd, &smsg, sizeof(smsg), 0) == -1)
+				perror("Send");
 
-		if (recv(cfd, &rmsg, sizeof(rmsg), 0) == -1)
-			perror("Recv");
+			if (recv(client.fd, &rmsg, sizeof(rmsg), 0) == -1)
+				perror("Recv");
 
-		printf("%s\n", rmsg);
+			printf("%s\n", rmsg);
+		}
+
+		if (close(client.fd) != 0)
+			perror("Close");
 	}
 
-	if (close(cfd) != 0)
-		perror("Close");
-	freeaddrinfo(info);
+	freeaddrinfo(client.info);
 
 	return 0;
 }
