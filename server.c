@@ -7,7 +7,7 @@
 
 #include "sockets.h"
 
-struct sockserv {
+struct socksvr {
 	int fd;
 	struct sockaddr_in addr;
 };
@@ -39,37 +39,37 @@ int main(int argc, char *argv[])
 	char rmsg[16];
 
 	/* file descriptors & address */
-	struct sockserv server;
-	struct sockserv client;
+	struct socksvr svr;
+	struct socksvr clt;
 
-	server.addr.sin_family		= addrfam;
-	server.addr.sin_port		= htons(port);
-	server.addr.sin_addr.s_addr	= htonl(INADDR_LOOPBACK); /* localhost */
+	svr.addr.sin_family		= addrfam;
+	svr.addr.sin_port		= htons(port);
+	svr.addr.sin_addr.s_addr	= htonl(INADDR_LOOPBACK); /* localhost */
 	socklen_t len			= sizeof(struct sockaddr_in);
 
 	/* Create, bind and listen */
-	server.fd = setup_socket(&server.addr, sizeof(server.addr));
-	if (server.fd == -1)
+	svr.fd = setup_socket(&svr.addr, sizeof(svr.addr));
+	if (svr.fd == -1)
 		return 0;
 
-	client.fd = accept(server.fd, (struct sockaddr *)&client.addr, &len);
-	if (client.fd == -1)
+	clt.fd = accept(svr.fd, (struct sockaddr *)&clt.addr, &len);
+	if (clt.fd == -1)
 		perror("Accept");
 
 	/* read, write */
-	if (read(client.fd, &rmsg, sizeof(rmsg)) == -1)
+	if (read(clt.fd, &rmsg, sizeof(rmsg)) == -1)
 		perror("Recv");
 
 	rmsg[15] = '\0';
 	printf("%s\n", rmsg);
 
-	if (send(client.fd, &rmsg, sizeof(rmsg), 0) == -1)
+	if (send(clt.fd, &rmsg, sizeof(rmsg), 0) == -1)
 		perror("Send");
 
 	/* Close file descriptors */
-	if (close(client.fd) != 0)
+	if (close(clt.fd) != 0)
 		perror("Close client");
-	if (close(server.fd) != 0)
+	if (close(svr.fd) != 0)
 		perror("Close server");
 
 	return 0;
